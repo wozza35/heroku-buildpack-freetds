@@ -9,6 +9,9 @@ ARCHIVE_NAME = "freetds-patched"
 
 puts "-----> FreeTDS building in #{BUILD_DIR}"
 
+puts "-----> Removing any previously cached FreeTDS"
+puts `find {CACHE_DIR} -type d -maxdepth 1 -name "freetds-[0-9]\.*" -exec rm -rv {} +`
+
 puts "-----> Fetching & Extracting FreeTDS"
 puts `mkdir -p #{CACHE_DIR}`
 puts `curl ftp://ftp.freetds.org/pub/freetds/stable/#{ARCHIVE_NAME}.tar.gz -o - | tar -xz -C #{CACHE_DIR} -f -`
