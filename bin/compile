@@ -3,35 +3,44 @@
 # sync output
 $stdout.sync = true
 
+# TODO: Downloading the tar is cheap, it's the build that takes ages
+# therefore download the tar to compare the version number.  If the cached built
+# artifacts are the same version, restore from the cache.  Otherwise,
+# delete the old cache then rebuild and cache the new version.
+
 BUILD_DIR = ARGV[0]
 CACHE_DIR = ARGV[1]
 ARCHIVE_NAME = "freetds-patched"
+INSTALL_DIR = "#{BUILD_DIR}/vendor/freetds"
 
 puts "-----> FreeTDS building in #{BUILD_DIR}"
+puts `mkdir -p #{INSTALL_DIR}`
 
 puts "-----> Fetching & Extracting FreeTDS"
-puts `mkdir -p #{CACHE_DIR}`
-puts `curl ftp://ftp.freetds.org/pub/freetds/stable/#{ARCHIVE_NAME}.tar.gz -o - | tar -xz -C #{CACHE_DIR} -f -`
+puts `curl ftp://ftp.freetds.org/pub/freetds/stable/#{ARCHIVE_NAME}.tar.gz -o - | tar -xz -C #{BUILD_DIR} -f -`
 
-TARGET_DIR = `ls #{CACHE_DIR} | grep 'freetds-[0-9]\.'`.chomp
+TARGET_DIR = `ls #{BUILD_DIR} | grep 'freetds-[0-9]\.'`.chomp
 puts "installing #{TARGET_DIR}"
 
-puts "-----> Configurating FreeTDS"
-puts `mkdir -p #{BUILD_DIR}/vendor/freetds`
-puts `cd #{CACHE_DIR}/#{TARGET_DIR} && ./configure --prefix=#{BUILD_DIR}/vendor/freetds --with-libiconv-prefix=DIR --with-openssl=DIR --with-tdsver=7.3`
+puts "-----> Configuring FreeTDS"
+puts `cd #{BUILD_DIR}/#{TARGET_DIR} && ./configure --prefix=#{INSTALL_DIR} --with-libiconv-prefix=DIR --with-openssl=DIR --with-tdsver=7.3`
 
 puts "-----> Building FreeTDS"
-puts `cd #{CACHE_DIR}/#{TARGET_DIR} && make`
+puts `cd #{BUILD_DIR}/#{TARGET_DIR} && make`
 
-puts "-----> Installing FreeTDS into #{BUILD_DIR}/vendor/freetds"
-puts `mkdir -p #{BUILD_DIR}/vendor/freetds`
-puts `cd #{CACHE_DIR}/#{TARGET_DIR} && make install`
+puts "-----> Installing FreeTDS into #{INSTALL_DIR}"
+puts `cd #{BUILD_DIR}/#{TARGET_DIR} && make install`
 
+puts "-----> Removing FreeTDS install files"
+puts `rm -rf #{BUILD_DIR}/#{TARGET_DIR}`
+
+
+# TODO: Understand why this step is necessary
 puts "-----> Copying FreeTDS into /app/vendor/freetds"
 puts `cp -r #{BUILD_DIR}/vendor/freetds /app/vendor/freetds`
 
 puts "-----> Writing FreeTDS configuration for subsequent buildpack"
-
+# TODO: Understand why this is required
 File.open("export", "a") do |file|
   file.write("export FREETDS_DIR=/app/vendor/freetds")
 end
