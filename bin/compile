@@ -10,7 +10,7 @@ $stdout.sync = true
 
 BUILD_DIR = ARGV[0]
 CACHE_DIR = ARGV[1]
-ARCHIVE_NAME = "freetds-patched"
+ARCHIVE_NAME = "freetds-1.1.17"
 INSTALL_DIR = "#{BUILD_DIR}/vendor/freetds"
 
 puts "-----> FreeTDS building in #{BUILD_DIR}"
